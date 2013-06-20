@@ -25,6 +25,9 @@ import org.andengine.opengl.util.GLState;
 import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
+import com.mytestproject.objects.RogueClass;
+import com.mytestproject.objects.Character.Gender;
+
 import android.opengl.GLES20;
 
 public class SceneManager {
@@ -43,7 +46,8 @@ public class SceneManager {
 	
 	private Scene mainGameScene;
 	
-	private AnimatedSprite player;
+	private RogueClass player;
+	private AnimatedSprite playerSprite;
 	private PlayerDirection currentPlayerDirection;
 	private static final int ANIMATE_DURATION = 20;
 	
@@ -55,10 +59,6 @@ public class SceneManager {
 	private AnalogOnScreenControl analogOnScreenControl;
 	
 	private PhysicsHandler physicsHandler;
-	
-	private BitmapTextureAtlas maleRogueTextureAtlas;
-	private TiledTextureRegion maleRogueTextureRegion;
-	private AnimatedSprite maleRogueSprite;
 	
 	public enum SceneType {
 		SPLASH,
@@ -102,12 +102,10 @@ public class SceneManager {
 		analogControlBaseTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(analogControlTexture, activity, "onscreen_control_base.png", 0, 0);
 		analogControlKnobTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(analogControlTexture, activity, "onscreen_control_knob.png", 128, 0);
 		analogControlTexture.load();
-		
+
 		// Male Rogue
-		maleRogueTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 192, 256, TextureOptions.DEFAULT);
-		maleRogueTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(maleRogueTextureAtlas, activity, "male_rogue.png", 0, 0, 6, 8);
-		maleRogueTextureAtlas.load();
-		
+		player = new RogueClass("Ryan", Gender.MALE);
+		player.loadResources(activity, activity.getTextureManager());
 	}
 	
 	public Scene createSplashScene() {
@@ -135,18 +133,14 @@ public class SceneManager {
 		mainGameScene = new Scene();
 		mainGameScene.setBackground(new Background(0, 1, 0));
 
-		// Female Rogue Sprite
-		maleRogueSprite = new AnimatedSprite(0, 0, maleRogueTextureRegion, activity.getVertexBufferObjectManager());
-		physicsHandler = new PhysicsHandler(maleRogueSprite);
-		maleRogueSprite.registerUpdateHandler(physicsHandler);
-		mainGameScene.attachChild(maleRogueSprite);
+		// Male Rogue Sprite
+		player.createSprite(activity);
+		playerSprite = player.getCharacterSprite();
+		mainGameScene.attachChild(playerSprite);
 		
-		player = maleRogueSprite;
 		createAnalogControl();
 		
-		
-		mainGameScene.setChildScene(analogOnScreenControl);
-		
+		mainGameScene.setChildScene(analogOnScreenControl);	
 	}
 	
 	public SceneType getCurrentScene() {
@@ -169,6 +163,9 @@ public class SceneManager {
 	}
 	
 	private void createAnalogControl() {
+		physicsHandler = new PhysicsHandler(playerSprite);
+		playerSprite.registerUpdateHandler(physicsHandler);
+		
 		// Analog Control
 		analogOnScreenControl = new AnalogOnScreenControl(0, camera.getHeight() - this.analogControlBaseTextureRegion.getHeight(), camera, this.analogControlBaseTextureRegion, this.analogControlKnobTextureRegion, 0.1f, 200, engine.getVertexBufferObjectManager(), new IAnalogOnScreenControlListener() {
 			@Override
@@ -186,43 +183,43 @@ public class SceneManager {
 				long[] animationDurations = new long[] {200, 200, 200, 200, 200, 200};
 				switch (currentPlayerDirection) {
 				case UP:
-					player.animate(animationDurations, 18, 23, true);
+					playerSprite.animate(animationDurations, 18, 23, true);
 					break;
 
 				case DOWN:
-					player.animate(animationDurations, 0, 5, true);
+					playerSprite.animate(animationDurations, 0, 5, true);
 					break;
 
 				case LEFT:
-					player.animate(animationDurations, 6, 11, true);
+					playerSprite.animate(animationDurations, 6, 11, true);
 					break;
 
 				case RIGHT:
-					player.animate(animationDurations, 12, 17, true);
+					playerSprite.animate(animationDurations, 12, 17, true);
 					break;
 
 				case RIGHT_UP:
-					player.animate(animationDurations, 18, 23, true);
+					playerSprite.animate(animationDurations, 18, 23, true);
 					break;
 
 				case RIGHT_DOWN:
-					player.animate(animationDurations, 30, 35, true);
+					playerSprite.animate(animationDurations, 30, 35, true);
 					break;
 
 				case LEFT_UP:
-					player.animate(animationDurations, 36, 41, true);
+					playerSprite.animate(animationDurations, 36, 41, true);
 					break;
 
 				case LEFT_DOWN:
-					player.animate(animationDurations, 24, 29, true);
+					playerSprite.animate(animationDurations, 24, 29, true);
 					break;
 
 				case NONE:
-					player.stopAnimation();
+					playerSprite.stopAnimation();
 					break;
 
 				default:
-					player.stopAnimation();
+					playerSprite.stopAnimation();
 					break;
 				}
 
@@ -243,46 +240,45 @@ public class SceneManager {
 	}
 	
 	private PlayerDirection getPlayerDirection(final float pValueX, final float pValueY) {
-	    
-	    if(pValueX == 0 && pValueY == 0) {
-	    	return PlayerDirection.NONE;
-	    }
-	   
-	    double angle = getAngle(pValueX, pValueY);
-	   
-	    if(isBetween(68, 113, angle)){
-	            return PlayerDirection.UP;
-	    }
-	   
-	    if(isBetween(248, 293, angle)){
-	            return PlayerDirection.DOWN;
-	    }
-	   
-	    if(isBetween(158, 203, angle)){
-	            return PlayerDirection.LEFT;
-	    }
-	   
-	    if(angle < 23 || angle > 338){
-	            return PlayerDirection.RIGHT;
-	    }
-	   
-	    if(isBetween(23, 68, angle)){
-	            return PlayerDirection.RIGHT_UP;
-	    }
-	   
-	    if(isBetween(293, 338, angle)){
-	            return PlayerDirection.RIGHT_DOWN;
-	    }
-	   
-	    if(isBetween(113, 158, angle)){
-	            return PlayerDirection.LEFT_UP;
-	    }
-	   
-	    if(isBetween(203, 248, angle)){
-	            return PlayerDirection.LEFT_DOWN;
-	    }
-	   
-	    return PlayerDirection.NONE;
+		if (pValueX == 0 && pValueY == 0) {
+			return PlayerDirection.NONE;
+		}
+
+		double angle = getAngle(pValueX, pValueY);
+
+		if (isBetween(68, 113, angle)) {
+			return PlayerDirection.UP;
+		}
+
+		if (isBetween(248, 293, angle)) {
+			return PlayerDirection.DOWN;
+		}
+
+		if (isBetween(158, 203, angle)) {
+			return PlayerDirection.LEFT;
+		}
+
+		if (angle < 23 || angle > 338) {
+			return PlayerDirection.RIGHT;
+		}
+
+		if (isBetween(23, 68, angle)) {
+			return PlayerDirection.RIGHT_UP;
+		}
+
+		if (isBetween(293, 338, angle)) {
+			return PlayerDirection.RIGHT_DOWN;
+		}
+
+		if (isBetween(113, 158, angle)) {
+			return PlayerDirection.LEFT_UP;
+		}
+
+		if (isBetween(203, 248, angle)) {
+			return PlayerDirection.LEFT_DOWN;
+		}
+
+		return PlayerDirection.NONE;
 	}
 	
 	// Return true if c is between a and b.

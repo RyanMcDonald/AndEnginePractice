@@ -7,8 +7,6 @@ import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.entity.scene.Scene;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.ui.activity.BaseGameActivity;
 
 import com.mytestproject.SceneManager.SceneType;
@@ -33,14 +31,12 @@ public class MainActivity extends BaseGameActivity {
 		sceneManager.loadSplashSceneResources();
 		
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
-		
 	}
+	
 	@Override
 	public void onCreateScene(OnCreateSceneCallback pOnCreateSceneCallback)
 			throws Exception {
-		pOnCreateSceneCallback.onCreateSceneFinished(sceneManager.createSplashScene());
-		
-		
+		pOnCreateSceneCallback.onCreateSceneFinished(sceneManager.createSplashScene());	
 	}
 	
 	@Override
@@ -50,6 +46,7 @@ public class MainActivity extends BaseGameActivity {
 				mEngine.unregisterUpdateHandler(pTimerHandler);
 				sceneManager.loadGameSceneResources();
 				sceneManager.createGameScenes();
+				
 				sceneManager.setCurrentScene(SceneType.MAINGAME);
 			}
 		}));
