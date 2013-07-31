@@ -1,4 +1,4 @@
-repo
+Practice AndEngine Game
 ====
 
-Ryan's Repository
+Just messing around with AndEngine, an open source 2D game engine.
